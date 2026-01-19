@@ -1,0 +1,108 @@
+@page "/blazor"
+@using global::Calculator.API.Services
+@inject ICalculatorService CalculatorService
+
+<PageTitle>Simple Calculator</PageTitle>
+
+<div class="calculator-container">
+    <h1>Simple Calculator</h1>
+    
+    <div class="display">
+        @if (isLoading)
+        {
+            <text>Calculating...</text>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <text>Error</text>
+        }
+        else
+        {
+            <text>@displayValue</text>
+        }
+    </div>
+    
+    <div class="input-group">
+        <label for="numberA">First Number:</label>
+        <input type="number" @bind="numberA" @bind:event="oninput" id="numberA" step="any" placeholder="Enter first number" disabled="@isLoading" />
+    </div>
+    
+    <div class="input-group">
+        <label for="numberB">Second Number:</label>
+        <input type="number" @bind="numberB" @bind:event="oninput" id="numberB" step="any" placeholder="Enter second number" disabled="@isLoading" />
+    </div>
+    
+    <div class="buttons">
+        <button class="btn-add" @onclick="@(() => Calculate("add"))" disabled="@isLoading">
+            + Add
+        </button>
+        <button class="btn-subtract" @onclick="@(() => Calculate("subtract"))" disabled="@isLoading">
+            − Subtract
+        </button>
+        <button class="btn-multiply" @onclick="@(() => Calculate("multiply"))" disabled="@isLoading">
+            × Multiply
+        </button>
+        <button class="btn-divide" @onclick="@(() => Calculate("divide"))" disabled="@isLoading">
+            ÷ Divide
+        </button>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error show">
+            @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    private double? numberA;
+    private double? numberB;
+    private double displayValue = 0;
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task Calculate(string operation)
+    {
+        if (!numberA.HasValue || !numberB.HasValue)
+        {
+            errorMessage = "Please enter valid numbers";
+            await Task.Delay(5000);
+            errorMessage = string.Empty;
+            return;
+        }
+
+        errorMessage = string.Empty;
+        isLoading = true;
+        
+        try
+        {
+            await Task.Delay(100); // Small delay for UI feedback
+            
+            double result = operation switch
+            {
+                "add" => CalculatorService.Add(numberA.Value, numberB.Value),
+                "subtract" => CalculatorService.Subtract(numberA.Value, numberB.Value),
+                "multiply" => CalculatorService.Multiply(numberA.Value, numberB.Value),
+                "divide" => CalculatorService.Divide(numberA.Value, numberB.Value),
+                _ => throw new ArgumentException("Invalid operation")
+            };
+            
+            displayValue = result;
+        }
+        catch (DivideByZeroException ex)
+        {
+            errorMessage = ex.Message;
+            displayValue = 0;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            displayValue = 0;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

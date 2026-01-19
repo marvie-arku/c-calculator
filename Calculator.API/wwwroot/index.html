@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .calculator-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .display {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 18px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-add {
+            background: #4CAF50;
+        }
+
+        .btn-subtract {
+            background: #f44336;
+        }
+
+        .btn-multiply {
+            background: #2196F3;
+        }
+
+        .btn-divide {
+            background: #FF9800;
+        }
+
+        .btn-reset {
+            background: #9E9E9E;
+            grid-column: span 2;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            color: #f44336;
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>Simple Calculator</h1>
+        
+        <div class="display" id="display">0</div>
+        
+        <div class="input-group">
+            <label for="numberA">First Number:</label>
+            <input type="number" id="numberA" step="any" placeholder="Enter first number">
+        </div>
+        
+        <div class="input-group">
+            <label for="numberB">Second Number:</label>
+            <input type="number" id="numberB" step="any" placeholder="Enter second number">
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-add" onclick="calculate('add')">+ Add</button>
+            <button class="btn-subtract" onclick="calculate('subtract')">− Subtract</button>
+            <button class="btn-multiply" onclick="calculate('multiply')">× Multiply</button>
+            <button class="btn-divide" onclick="calculate('divide')">÷ Divide</button>
+            <button class="btn-reset" onclick="reset()">Reset</button>
+        </div>
+        
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api/calculator';
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        function updateDisplay(value) {
+            const display = document.getElementById('display');
+            display.textContent = value;
+        }
+
+        function reset() {
+            document.getElementById('numberA').value = '';
+            document.getElementById('numberB').value = '';
+            updateDisplay('0');
+            document.getElementById('error').classList.remove('show');
+        }
+
+        async function calculate(operation) {
+            const numberA = parseFloat(document.getElementById('numberA').value);
+            const numberB = parseFloat(document.getElementById('numberB').value);
+
+            // Validate inputs
+            if (isNaN(numberA) || isNaN(numberB)) {
+                showError('Please enter valid numbers');
+                return;
+            }
+
+            // Clear previous errors
+            document.getElementById('error').classList.remove('show');
+
+            // Show loading state
+            const container = document.querySelector('.calculator-container');
+            container.classList.add('loading');
+            updateDisplay('Calculating...');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${operation}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        a: numberA,
+                        b: numberB
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateDisplay(data.result);
+                } else {
+                    showError(data.error || 'An error occurred');
+                    updateDisplay('Error');
+                }
+            } catch (error) {
+                showError('Failed to connect to the server. Make sure the API is running.');
+                updateDisplay('Error');
+            } finally {
+                container.classList.remove('loading');
+            }
+        }
+
+        // Allow Enter key to trigger calculation
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                const buttons = document.querySelectorAll('button');
+                if (buttons.length > 0) {
+                    buttons[0].click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
