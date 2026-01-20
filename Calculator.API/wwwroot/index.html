@@ -144,11 +144,96 @@
             opacity: 0.6;
             pointer-events: none;
         }
+
+        .toggle-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: 500;
+            color: #555;
+            gap: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .toggle-switch input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #667eea;
+        }
+
+        .toggle-text {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 70px;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
     <div class="calculator-container">
         <h1>Simple Calculator</h1>
+        
+        <div class="toggle-container">
+            <label class="toggle-label">
+                <span>Calculation Mode:</span>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="calculationModeToggle" checked>
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-text" id="toggleText">offline</span>
+            </label>
+        </div>
         
         <div class="display" id="display">0</div>
         
@@ -175,6 +260,13 @@
 
     <script>
         const API_BASE_URL = '/api/calculator';
+        let useFrontendCalculation = true; // Default to frontend for offline capability
+
+        // Toggle event listener
+        document.getElementById('calculationModeToggle').addEventListener('change', function(e) {
+            useFrontendCalculation = e.target.checked;
+            document.getElementById('toggleText').textContent = useFrontendCalculation ? 'offline' : 'online';
+        });
 
         function showError(message) {
             const errorDiv = document.getElementById('error');
@@ -197,6 +289,47 @@
             document.getElementById('error').classList.remove('show');
         }
 
+        // Frontend calculation - pure JavaScript, works offline
+        function calculateFrontend(operation, numberA, numberB) {
+            switch(operation) {
+                case 'add':
+                    return numberA + numberB;
+                case 'subtract':
+                    return numberA - numberB;
+                case 'multiply':
+                    return numberA * numberB;
+                case 'divide':
+                    if (numberB === 0) {
+                        throw new Error('Cannot divide by zero');
+                    }
+                    return numberA / numberB;
+                default:
+                    throw new Error('Invalid operation');
+            }
+        }
+
+        // Backend calculation - calls API
+        async function calculateBackend(operation, numberA, numberB) {
+            const response = await fetch(`${API_BASE_URL}/${operation}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    a: numberA,
+                    b: numberB
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                return data.result;
+            } else {
+                throw new Error(data.error || 'An error occurred');
+            }
+        }
+
         async function calculate(operation) {
             const numberA = parseFloat(document.getElementById('numberA').value);
             const numberB = parseFloat(document.getElementById('numberB').value);
@@ -216,27 +349,23 @@
             updateDisplay('Calculating...');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/${operation}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        a: numberA,
-                        b: numberB
-                    })
-                });
+                let result;
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    updateDisplay(data.result);
+                if (useFrontendCalculation) {
+                    // Frontend calculation - works offline, no API call needed
+                    result = calculateFrontend(operation, numberA, numberB);
+                    updateDisplay(result);
                 } else {
-                    showError(data.error || 'An error occurred');
-                    updateDisplay('Error');
+                    // Backend calculation - calls API
+                    result = await calculateBackend(operation, numberA, numberB);
+                    updateDisplay(result);
                 }
             } catch (error) {
-                showError('Failed to connect to the server. Make sure the API is running.');
+                if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+                    showError('Failed to connect to the server. Try using Frontend mode for offline calculation.');
+                } else {
+                    showError(error.message || 'An error occurred');
+                }
                 updateDisplay('Error');
             } finally {
                 container.classList.remove('loading');

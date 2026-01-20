@@ -10,6 +10,9 @@ builder.Services.AddServerSideBlazor();
 // Register calculator service
 builder.Services.AddScoped<Calculator.API.Services.ICalculatorService, Calculator.API.Services.CalculatorService>();
 
+// Register HttpClient for API calls
+builder.Services.AddHttpClient();
+
 // Add CORS to allow frontend to call the API
 builder.Services.AddCors(options =>
 {

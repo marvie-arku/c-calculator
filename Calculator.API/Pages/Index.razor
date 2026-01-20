@@ -1,11 +1,25 @@
 @page "/blazor"
 @using global::Calculator.API.Services
+@using System.Text.Json
 @inject ICalculatorService CalculatorService
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager Navigation
 
 <PageTitle>Simple Calculator</PageTitle>
 
 <div class="calculator-container">
     <h1>Simple Calculator</h1>
+    
+    <div class="toggle-container">
+        <label class="toggle-label">
+            <span>Calculation Mode:</span>
+            <div class="toggle-switch">
+                <input type="checkbox" checked="@useFrontendCalculation" @onchange="@((ChangeEventArgs e) => useFrontendCalculation = (bool)(e.Value ?? false))" />
+                <span class="toggle-slider"></span>
+            </div>
+            <span class="toggle-text">@(useFrontendCalculation ? "Frontend" : "Backend")</span>
+        </label>
+    </div>
     
     <div class="display">
         @if (isLoading)
@@ -61,6 +75,7 @@
     private double displayValue = 0;
     private string errorMessage = string.Empty;
     private bool isLoading = false;
+    private bool useFrontendCalculation = true; // Default to frontend for offline capability
 
     private async Task Calculate(string operation)
     {
@@ -77,22 +92,29 @@
         
         try
         {
-            await Task.Delay(100); // Small delay for UI feedback
+            double result;
             
-            double result = operation switch
+            if (useFrontendCalculation)
             {
-                "add" => CalculatorService.Add(numberA.Value, numberB.Value),
-                "subtract" => CalculatorService.Subtract(numberA.Value, numberB.Value),
-                "multiply" => CalculatorService.Multiply(numberA.Value, numberB.Value),
-                "divide" => CalculatorService.Divide(numberA.Value, numberB.Value),
-                _ => throw new ArgumentException("Invalid operation")
-            };
+                // Frontend calculation - works offline, no API call needed
+                result = await CalculateFrontend(operation);
+            }
+            else
+            {
+                // Backend calculation - calls API
+                result = await CalculateBackend(operation);
+            }
             
             displayValue = result;
         }
         catch (DivideByZeroException ex)
         {
             errorMessage = ex.Message;
+            displayValue = 0;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Failed to connect to the server. Try using Frontend mode for offline calculation.";
             displayValue = 0;
         }
         catch (Exception ex)
@@ -104,5 +126,70 @@
         {
             isLoading = false;
         }
+    }
+
+    private Task<double> CalculateFrontend(string operation)
+    {
+        // Pure frontend calculation - no API calls, works offline
+        double result = operation switch
+        {
+            "add" => numberA!.Value + numberB!.Value,
+            "subtract" => numberA!.Value - numberB!.Value,
+            "multiply" => numberA!.Value * numberB!.Value,
+            "divide" => numberB!.Value == 0 
+                ? throw new DivideByZeroException("Cannot divide by zero") 
+                : numberA!.Value / numberB!.Value,
+            _ => throw new ArgumentException("Invalid operation")
+        };
+        
+        return Task.FromResult(result);
+    }
+
+    private async Task<double> CalculateBackend(string operation)
+    {
+        // Backend calculation via API
+        var httpClient = HttpClientFactory.CreateClient();
+        var request = new
+        {
+            a = numberA!.Value,
+            b = numberB!.Value
+        };
+
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        
+        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        var apiUrl = $"{baseUri}/api/calculator/{operation}";
+        var response = await httpClient.PostAsync(apiUrl, content);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = JsonSerializer.Deserialize<CalculationResponse>(responseContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            return result!.Result;
+        }
+        else
+        {
+            var error = JsonSerializer.Deserialize<ErrorResponse>(responseContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            throw new Exception(error?.Error ?? "An error occurred");
+        }
+    }
+
+    private class CalculationResponse
+    {
+        public double Result { get; set; }
+    }
+
+    private class ErrorResponse
+    {
+        public string? Error { get; set; }
     }
 }
