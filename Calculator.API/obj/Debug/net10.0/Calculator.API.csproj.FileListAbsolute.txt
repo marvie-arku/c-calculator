@@ -58,7 +58,6 @@
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/scopedcss/bundle/Calculator.API.styles.css
-/Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/compressed/s9totdh4n8-{0}-vbx8ozhzc5-vbx8ozhzc5.gz
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/compressed/d3zy8esg1n-{0}-wmp8iwak4q-wmp8iwak4q.gz
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/compressed/gzlbjtblan-{0}-2lgipwaf5j-2lgipwaf5j.gz
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/staticwebassets.build.json
@@ -73,3 +72,4 @@
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/ref/Calculator.API.dll
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/Calculator.API.sourcelink.json
 /Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/compressed/kkkm84k0em-{0}-d9hytnsn0m-d9hytnsn0m.gz
+/Users/marvie/Desktop/c-calculator/Calculator.API/obj/Debug/net10.0/compressed/s9totdh4n8-{0}-kzrz472a63-kzrz472a63.gz

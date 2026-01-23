@@ -17,7 +17,7 @@
                 <input type="checkbox" checked="@useFrontendCalculation" @onchange="@((ChangeEventArgs e) => useFrontendCalculation = (bool)(e.Value ?? false))" />
                 <span class="toggle-slider"></span>
             </div>
-            <span class="toggle-text">@(useFrontendCalculation ? "Frontend" : "Backend")</span>
+            <span class="toggle-text">@(useFrontendCalculation ? "offline" : "online")</span>
         </label>
     </div>
     
@@ -96,12 +96,12 @@
             
             if (useFrontendCalculation)
             {
-                // Frontend calculation - works offline, no API call needed
-                result = await CalculateFrontend(operation);
+                // Offline mode: Use CalculatorService directly (no HTTP overhead)
+                result = CalculateUsingService(operation, numberA!.Value, numberB!.Value);
             }
             else
             {
-                // Backend calculation - calls API
+                // Online mode: Calls API which uses CalculatorService
                 result = await CalculateBackend(operation);
             }
             
@@ -128,21 +128,17 @@
         }
     }
 
-    private Task<double> CalculateFrontend(string operation)
+    // Single calculation method using CalculatorService (used by both modes)
+    private double CalculateUsingService(string operation, double a, double b)
     {
-        // Pure frontend calculation - no API calls, works offline
-        double result = operation switch
+        return operation switch
         {
-            "add" => numberA!.Value + numberB!.Value,
-            "subtract" => numberA!.Value - numberB!.Value,
-            "multiply" => numberA!.Value * numberB!.Value,
-            "divide" => numberB!.Value == 0 
-                ? throw new DivideByZeroException("Cannot divide by zero") 
-                : numberA!.Value / numberB!.Value,
+            "add" => CalculatorService.Add(a, b),
+            "subtract" => CalculatorService.Subtract(a, b),
+            "multiply" => CalculatorService.Multiply(a, b),
+            "divide" => CalculatorService.Divide(a, b),
             _ => throw new ArgumentException("Invalid operation")
         };
-        
-        return Task.FromResult(result);
     }
 
     private async Task<double> CalculateBackend(string operation)
