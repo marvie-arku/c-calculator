@@ -98,7 +98,6 @@
 /Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/Calculator.Tests.AssemblyInfoInputs.cache
 /Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/Calculator.Tests.AssemblyInfo.cs
 /Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/Calculator.Tests.csproj.CoreCompileInputs.cache
-/Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/Calculator.Tests.sourcelink.json
 /Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/Calculat.ED495408.Up2Date
 /Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/Calculator.Tests.dll
 /Users/marvie/Desktop/c-calculator/Calculator.Tests/obj/Debug/net10.0/refint/Calculator.Tests.dll
