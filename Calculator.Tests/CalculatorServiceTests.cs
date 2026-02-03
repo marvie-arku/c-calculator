@@ -15,8 +15,7 @@ public class CalculatorServiceTests
 
         var result = _service.Add(a, b);
 
-        // Intentionally incorrect expected value to demonstrate a failing test in CI/CD
-        Assert.Equal(6, result);
+        Assert.Equal(5, result);
     }
 
     [Fact]
