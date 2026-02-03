@@ -1,3 +1,5 @@
+using Prometheus;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -49,5 +51,9 @@ app.MapBlazorHub();
 
 // Blazor available at /blazor
 app.MapFallbackToPage("/blazor/{**path}", "/_Host");
+
+// Prometheus metrics endpoints
+app.UseMetricServer();  // Exposes /metrics endpoint
+app.UseHttpMetrics();   // Auto-tracks HTTP request metrics
 
 app.Run();
